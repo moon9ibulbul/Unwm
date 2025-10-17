@@ -15,6 +15,80 @@
         isDetecting: false
     };
 
+    function resolveAssetPath(path) {
+        try {
+            return new URL(path, window.location.href).toString();
+        } catch (err) {
+            return path;
+        }
+    }
+
+    async function fetchAssetJson(path) {
+        const url = resolveAssetPath(path);
+        if (typeof fetch === 'function') {
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (response.ok || response.status === 0) {
+                    return await response.json();
+                }
+            } catch (error) {
+                console.warn('fetchAssetJson fallback to XHR', error);
+            }
+        }
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.overrideMimeType('application/json');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== XMLHttpRequest.DONE) {
+                    return;
+                }
+                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
+                    try {
+                        resolve(xhr.responseText ? JSON.parse(xhr.responseText) : []);
+                    } catch (err) {
+                        reject(err);
+                    }
+                } else {
+                    reject(new Error('Status ' + xhr.status));
+                }
+            };
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.send();
+        });
+    }
+
+    async function fetchAssetBlob(path) {
+        const url = resolveAssetPath(path);
+        if (typeof fetch === 'function') {
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (response.ok || response.status === 0) {
+                    return await response.blob();
+                }
+            } catch (error) {
+                console.warn('fetchAssetBlob fallback to XHR', error);
+            }
+        }
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== XMLHttpRequest.DONE) {
+                    return;
+                }
+                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
+                    resolve(xhr.response);
+                } else {
+                    reject(new Error('Status ' + xhr.status));
+                }
+            };
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.send();
+        });
+    }
+
     function toListItem(sample) {
         const item = document.createElement('button');
         item.type = 'button';
@@ -48,8 +122,10 @@
 
     async function fetchBuiltInSamples() {
         try {
-            const response = await fetch('watermark-samples.json');
-            const raw = await response.json();
+            const raw = await fetchAssetJson('watermark-samples.json');
+            if (!Array.isArray(raw)) {
+                throw new Error('Invalid sample list format');
+            }
             state.builtIn = raw.map((item) => ({
                 id: `asset:${item.file}`,
                 name: item.name.replace(/\s+/g, ' ').trim(),
@@ -91,7 +167,7 @@
             updateStatus('Memuat watermark…', 'info');
             if (sample.type === 'asset') {
                 const url = `watermark-samples/${encodeURIComponent(sample.file)}`;
-                const blob = await fetch(url).then((res) => res.blob());
+                const blob = await fetchAssetBlob(url);
                 const dataUrl = await blobToDataUrl(blob);
                 window.loadWatermarkFromDataUrl(dataUrl, sample.name);
             } else if (window.AstralSamples && typeof window.AstralSamples.loadUserSample === 'function') {

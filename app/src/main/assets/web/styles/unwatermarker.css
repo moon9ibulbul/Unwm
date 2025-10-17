@@ -280,6 +280,12 @@ main {
     gap: 12px;
 }
 
+.preview-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+}
+
 .preview-images figure {
     margin: 0;
     display: flex;
@@ -292,6 +298,11 @@ main {
     border-radius: 12px;
     border: 1px solid var(--outline);
     object-fit: contain;
+}
+
+.preview-panel button:disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 @media (max-width: 1080px) {

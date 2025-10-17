@@ -20,6 +20,105 @@ var filters = {
 var zipFile
 var isBatchZip = false
 var wmPosIsUpdate = false   //for automatic positioning in batch mode
+var downloadButton = document.getElementById('download-result')
+var lastResultUrl = ''
+var lastResultName = ''
+
+function isObjectUrl(url) {
+    return typeof url === 'string' && url.startsWith('blob:')
+}
+
+function releaseObjectUrl(url) {
+    if (!isObjectUrl(url)) {
+        return
+    }
+    try {
+        URL.revokeObjectURL(url)
+    } catch (err) {
+        console.debug('Tidak dapat melepas URL sementara hasil', err)
+    }
+}
+
+function setDownloadButtonEnabled(enabled) {
+    if (downloadButton) {
+        downloadButton.disabled = !enabled
+    }
+}
+
+function clearDownloadState(options) {
+    options = options || {}
+    var previousUrl = lastResultUrl
+    if (!options.keepPreview) {
+        var previewAfter = document.getElementById('preview-after')
+        if (previewAfter) {
+            previewAfter.src = ''
+        }
+    }
+    lastResultUrl = ''
+    lastResultName = ''
+    if (!options.preserveButton) {
+        setDownloadButtonEnabled(false)
+    }
+    if (!options.skipRevoke) {
+        releaseObjectUrl(previousUrl)
+    }
+    return previousUrl
+}
+
+function getResultFileName() {
+    if (files && files[currentImage] && files[currentImage].name) {
+        return files[currentImage].name.replace(/\.[^\.]*$/, '_uwm.png')
+    }
+    return 'hasil_uwm.png'
+}
+
+function updateDownloadState(url) {
+    if (!url) {
+        clearDownloadState()
+        return
+    }
+    if (isObjectUrl(lastResultUrl) && lastResultUrl !== url) {
+        releaseObjectUrl(lastResultUrl)
+    }
+    lastResultUrl = url
+    lastResultName = getResultFileName()
+    setDownloadButtonEnabled(true)
+}
+
+function getAutoWholePixelElement() {
+    return document.getElementById('autoWholePixel')
+}
+
+function getWholePixelRadius() {
+    var element = getAutoWholePixelElement()
+    if (!element) {
+        return 0
+    }
+    var value = parseInt(element.value, 10)
+    return isNaN(value) ? 0 : value
+}
+
+function setWholePixelRadius(value) {
+    var element = getAutoWholePixelElement()
+    if (!element) {
+        return
+    }
+    if (typeof value === 'number' && !isNaN(value)) {
+        element.value = value
+    } else if (typeof value === 'string' && value.trim() !== '') {
+        element.value = value
+    } else {
+        element.value = 0
+    }
+}
+
+clearDownloadState()
+
+if (downloadButton) {
+    downloadButton.addEventListener('click', () => {
+        saveResult({ advance: false })
+    })
+}
 
 imageInput.addEventListener('change', () => loadImageFromInput())
 watermarkInput.addEventListener('change', () => loadWatermark())
@@ -33,8 +132,13 @@ document.getElementById('overlayMode').addEventListener('change', function(){
 })
 
 function loadImage() {
-    if (files.length > currentImage) {
-        image.onload = async function () {
+    var previousResultUrl = clearDownloadState({ skipRevoke: true })
+    if (!files || files.length <= currentImage) {
+        releaseObjectUrl(previousResultUrl)
+        return
+    }
+    image.onload = async function () {
+        try {
             if (this.naturalHeight > 32000 || this.naturalWidth > 32000 || this.naturalWidth*this.naturalHeight > 250000000) {
                 alert('Image is too large. (Browser limitation)')
                 this.width = 0
@@ -64,6 +168,14 @@ function loadImage() {
                 wmPosIsUpdate = false
             }
             resetZoom()
+            var previewBefore = document.getElementById('preview-before')
+            if (previewBefore) {
+                previewBefore.src = this.src
+            }
+            var previewAfter = document.getElementById('preview-after')
+            if (previewAfter) {
+                previewAfter.src = ''
+            }
             image_ib = await createImageBitmap(this, {
                 colorSpaceConversion: 'none',
                 premultiplyAlpha: 'none',
@@ -88,19 +200,21 @@ function loadImage() {
                     name: files && files[currentImage] ? files[currentImage].name : ''
                 }
             }))
-        }
-        image.src = URL.createObjectURL(files[currentImage])
-        if (currentImage == 0) {
-            if (files.length > 1) {
-                //enable skipbutton for batch mode.
-                document.getElementById('skipbutton').style.display = 'initial'
-            } else {
-                //disable the button when batch mode is interrupted
-                document.getElementById('skipbutton').style.display = 'none'
+        } finally {
+            if (previousResultUrl && previousResultUrl !== this.src) {
+                releaseObjectUrl(previousResultUrl)
             }
         }
-    } else {
-        //alert('No more images loaded.')
+    }
+    image.src = URL.createObjectURL(files[currentImage])
+    if (currentImage == 0) {
+        if (files.length > 1) {
+            //enable skipbutton for batch mode.
+            document.getElementById('skipbutton').style.display = 'initial'
+        } else {
+            //disable the button when batch mode is interrupted
+            document.getElementById('skipbutton').style.display = 'none'
+        }
     }
 }
 function loadImageFromInput() {
@@ -256,6 +370,14 @@ function dragWatermarkEnd(e) {
     document.onmousemove = null;
 }
 function unwatermark() {
+    if (!image_ib) {
+        alert('Muat gambar terlebih dahulu.')
+        return
+    }
+    if (!wm_ib) {
+        alert('Muat watermark terlebih dahulu.')
+        return
+    }
                 console.debug('un-wm started')
     // var w = watermark.width
     // if (wm_x + w > image.naturalWidth) {
@@ -291,7 +413,7 @@ function unwatermark() {
     ctx_wm.drawImage(wm_ib, 0, 0)
     
     //get that value because we'll need to load a bit more data from the images
-    const wholePxRadius = parseInt(document.getElementById('autoWholePixel').value)
+    const wholePxRadius = getWholePixelRadius()
     let img_x = Math.max(0, x-wholePxRadius)
     let img_y = Math.max(0, y-wholePxRadius)
     let img_w = w //Math.min(image.naturalWidth, w+2*wholePxRadius)   //this was a failed experiment anyway
@@ -881,6 +1003,7 @@ function triggerDownload(url) {
         previewAfter.src = url
     }
     image.src = url
+    updateDownloadState(url)
     var hasBatch = files && files.length > 1
     if (document.getElementById('preview').checked && !(document.getElementById('fullBatch').checked && hasBatch)) {
         watermark.style.display = 'none'
@@ -897,33 +1020,64 @@ function triggerDownload(url) {
         }
     }))
 }
-function confirmYes() {
-    if (!isBatchZip) {
-        //if because semi batch with preview and zip enabled might pass through here
-        var a = document.createElement('a')
-        a.href = image.src
-        a.download = files[currentImage].name.replace(/\.[^\.]*$/, '_uwm.png')
-        a.click()
-        nextImage()
-    } else {
-        fetch(image.src).then(response => response.arrayBuffer()).then(buffer => {
+function saveResult(options) {
+    options = options || {}
+    var advance = !!options.advance
+    if (!lastResultUrl) {
+        return
+    }
+    var finalizeAdvance = () => {
+        imageBackupUrl = ''
+        watermark.style.display = 'initial'
+        document.getElementById('confirm').style.display = 'none'
+        document.getElementById('unwatermarkbuttons').style.display = 'initial'
+        setDownloadButtonEnabled(!!lastResultUrl)
+    }
+    var filename = lastResultName || getResultFileName()
+    if (isBatchZip && advance) {
+        if (!zipFile) {
+            finalizeAdvance()
+            return
+        }
+        fetch(lastResultUrl).then(response => response.arrayBuffer()).then(buffer => {
             zipFile.appendFile({
-                name: files[currentImage].name.replace(/\.[^\.]*$/, '_uwm.png'),
+                name: filename,
                 data: buffer
             })
             nextImage()
+            finalizeAdvance()
+        }).catch(err => {
+            console.error('Gagal menyimpan hasil batch', err)
+            finalizeAdvance()
         })
+        return
     }
-    imageBackupUrl = ''
-    watermark.style.display = 'initial'
-    document.getElementById('confirm').style.display = 'none'
-    document.getElementById('unwatermarkbuttons').style.display = 'initial'
+    var a = document.createElement('a')
+    a.href = lastResultUrl
+    a.download = filename
+    a.click()
+    if (advance) {
+        nextImage()
+        finalizeAdvance()
+    }
+}
+function confirmYes() {
+    saveResult({ advance: true })
 }
 function confirmNo() {
     image.src = imageBackupUrl
+    clearDownloadState()
     watermark.style.display = 'initial'
     document.getElementById('confirm').style.display = 'none'
     document.getElementById('unwatermarkbuttons').style.display = 'initial'
+    var previewAfter = document.getElementById('preview-after')
+    if (previewAfter) {
+        previewAfter.src = ''
+    }
+    var previewBefore = document.getElementById('preview-before')
+    if (previewBefore) {
+        previewBefore.src = imageBackupUrl
+    }
 }
 async function autoDetectWatermarkPosition() {
     document.dispatchEvent(new CustomEvent('astral:autodetect-start'))
@@ -1237,9 +1391,9 @@ window.addEventListener('unload', e => {
         adjustBrightness: document.getElementById('adjustBrightness').checked,
         fullBatch: document.getElementById('fullBatch').checked,
         fullBatchZIP: document.getElementById('fullBatchZIP').checked,
-        pixelatedZoom: document.getElementById('pixelatedZoom').checked,
+        pixelatedZoom: document.getElementById('pixelatedZoom') ? document.getElementById('pixelatedZoom').checked : false,
         showAdvanced: document.getElementById('showAdvanced').checked,
-        autoWholePixel: document.getElementById('autoWholePixel').value,
+        autoWholePixel: String(getWholePixelRadius()),
         filterJPEG: document.getElementById('filterJPEG').checked,
         filterJPEGStrength: document.getElementById('filterJPEGStrength').value,
         filterJPEGThreshold: document.getElementById('filterJPEGThreshold').value
@@ -1260,15 +1414,20 @@ function restoreSettingsFromLocalStorage() {
         document.getElementById('adjustBrightness').checked = settings.adjustBrightness
         document.getElementById('fullBatch').checked = settings.fullBatch
         document.getElementById('fullBatchZIP').checked = settings.fullBatchZIP
-        document.getElementById('pixelatedZoom').checked = settings.pixelatedZoom
-        if (settings.pixelatedZoom) {
-            imageContainer.className += " pixelated"
+        var pixelatedZoomToggle = document.getElementById('pixelatedZoom')
+        if (pixelatedZoomToggle) {
+            pixelatedZoomToggle.checked = settings.pixelatedZoom
+            if (settings.pixelatedZoom) {
+                imageContainer.className += " pixelated"
+            }
         }
         document.getElementById('showAdvanced').checked = settings.showAdvanced
         if (settings.showAdvanced) {
             document.getElementById('advancedOptions').style.display = 'initial'
         }
-        document.getElementById('autoWholePixel').value = settings.autoWholePixel
+        if (typeof settings.autoWholePixel !== 'undefined') {
+            setWholePixelRadius(settings.autoWholePixel)
+        }
         document.getElementById('filterJPEG').checked = settings.filterJPEG
         document.getElementById('filterJPEGStrength').value = settings.filterJPEGStrength
         document.getElementById('filterJPEGThreshold').value = settings.filterJPEGThreshold
