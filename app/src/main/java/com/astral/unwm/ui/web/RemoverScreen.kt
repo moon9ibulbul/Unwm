@@ -37,7 +37,7 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
-    val onSampleSaved: (SampleManager.SampleMetadata) -> Unit = remember {
+    val handleSampleSaved: (SampleManager.SampleMetadata) -> Unit = remember {
         { sample ->
             val payload = JSONObject()
                 .put("id", sample.id)
@@ -74,7 +74,7 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
         val extension = guessExtension(name, resolver.getType(uri))
         val cleanedName = name.substringBeforeLast('.')
         val sample = sampleManager.addSample(cleanedName, bytes, extension)
-        onSampleSaved(sample)
+        handleSampleSaved(sample)
         showToast("Sample '${sample.name}' tersimpan.")
     }
 
@@ -105,7 +105,7 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
     val samplesInterface = remember(sampleManager) {
         AstralSamplesInterface(sampleManager)
     }.apply {
-        onSampleSaved = onSampleSaved
+        onSampleSaved = handleSampleSaved
         showToast = showToast
         onImportRequest = {
             pendingImport = true
@@ -148,7 +148,7 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
                         if (allowMultiple) {
                             multiImagePicker.launch(mimeTypes)
                         } else {
-                            singleImagePicker.launch(mimeTypes.first())
+                            singleImagePicker.launch(arrayOf(mimeTypes.first()))
                         }
                         return true
                     }

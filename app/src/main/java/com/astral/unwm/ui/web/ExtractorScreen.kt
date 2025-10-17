@@ -33,7 +33,7 @@ fun ExtractorScreen(modifier: Modifier = Modifier) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
-    val onSampleSaved: (SampleManager.SampleMetadata) -> Unit = remember {
+    val handleSampleSaved: (SampleManager.SampleMetadata) -> Unit = remember {
         { sample ->
             val payload = JSONObject()
                 .put("id", sample.id)
@@ -72,7 +72,7 @@ fun ExtractorScreen(modifier: Modifier = Modifier) {
     val samplesInterface = remember(sampleManager) {
         AstralSamplesInterface(sampleManager)
     }.apply {
-        onSampleSaved = onSampleSaved
+        onSampleSaved = handleSampleSaved
         showToast = showToast
     }
 
