@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.Sync
+
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -84,4 +86,23 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+val watermarkInputDir = rootProject.layout.projectDirectory.dir("watermark")
+val watermarkAssetsOutput = layout.buildDirectory.dir("generated/watermark-assets/web/watermark-samples")
+
+val generateWatermarkAssets by tasks.registering(Sync::class) {
+    from(watermarkInputDir)
+    include("**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.webp")
+    into(watermarkAssetsOutput.get().asFile)
+    onlyIf { watermarkInputDir.asFile.exists() }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(
+            generateWatermarkAssets,
+            Sync::getDestinationDir
+        )
+    }
 }

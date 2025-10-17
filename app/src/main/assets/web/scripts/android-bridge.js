@@ -58,6 +58,7 @@
             }));
         } catch (error) {
             console.error('Failed to load sample list', error);
+            updateStatus('Gagal memuat daftar sample bawaan.', 'warning');
         }
     }
 
