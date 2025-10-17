@@ -2,5 +2,6 @@
 build/
 app/build/
 app/.cxx/
+gradle/wrapper/gradle-wrapper.jar
 *.iml
 .idea/

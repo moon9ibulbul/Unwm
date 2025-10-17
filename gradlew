@@ -114,8 +114,28 @@ case "$( uname )" in                #(
   NONSTOP* )        nonstop=true ;;
 esac
 
-CLASSPATH="\\\"\\\""
+WRAPPER_JAR="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+WRAPPER_B64="$WRAPPER_JAR.base64"
 
+if [ ! -f "$WRAPPER_JAR" ] ; then
+    if [ -f "$WRAPPER_B64" ] ; then
+        if command -v base64 >/dev/null 2>&1 ; then
+            tmp_jar="$WRAPPER_JAR.tmp"
+            if base64 --decode "$WRAPPER_B64" > "$tmp_jar" ; then
+                mv "$tmp_jar" "$WRAPPER_JAR"
+            else
+                rm -f "$tmp_jar"
+                die "ERROR: Failed to decode Gradle wrapper JAR from $WRAPPER_B64"
+            fi
+        else
+            die "ERROR: base64 command not found; cannot decode Gradle wrapper JAR."
+        fi
+    else
+        die "ERROR: Gradle wrapper JAR is missing and could not be restored."
+    fi
+fi
+
+CLASSPATH="\\\"\\\""
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
