@@ -33,7 +33,7 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
     var pendingImport by remember { mutableStateOf(false) }
     var fileChooserCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
 
-    val showToast: (String) -> Unit = { message ->
+    val displayToast: (String) -> Unit = { message ->
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
@@ -59,7 +59,7 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
         if (!pendingImport) return@rememberLauncherForActivityResult
         pendingImport = false
         if (uri == null) {
-            showToast("Import dibatalkan.")
+            displayToast("Import dibatalkan.")
             return@rememberLauncherForActivityResult
         }
         val resolver = context.contentResolver
@@ -68,14 +68,14 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
             BufferedInputStream(stream).use { it.readBytes() }
         }
         if (bytes == null) {
-            showToast("Tidak dapat membaca file watermark.")
+            displayToast("Tidak dapat membaca file watermark.")
             return@rememberLauncherForActivityResult
         }
         val extension = guessExtension(name, resolver.getType(uri))
         val cleanedName = name.substringBeforeLast('.')
         val sample = sampleManager.addSample(cleanedName, bytes, extension)
         handleSampleSaved(sample)
-        showToast("Sample '${sample.name}' tersimpan.")
+        displayToast("Sample '${sample.name}' tersimpan.")
     }
 
     val multiImagePicker = rememberLauncherForActivityResult(
@@ -106,7 +106,7 @@ fun RemoverScreen(modifier: Modifier = Modifier) {
         AstralSamplesInterface(sampleManager)
     }.apply {
         onSampleSaved = handleSampleSaved
-        showToast = showToast
+        showToast = displayToast
         onImportRequest = {
             pendingImport = true
             sampleImportLauncher.launch(arrayOf("image/*"))
