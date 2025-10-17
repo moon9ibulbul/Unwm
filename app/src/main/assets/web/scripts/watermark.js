@@ -987,7 +987,7 @@ function triggerDownload(url) {
     var hasBatch = files && files.length > 1
     if (document.getElementById('preview').checked && !(document.getElementById('fullBatch').checked && hasBatch)) {
         watermark.style.display = 'none'
-        document.getElementById('confirm').style.display = 'initial'
+        document.getElementById('confirm').style.display = 'flex'
         document.getElementById('unwatermarkbuttons').style.display = 'none'
     } else {
         confirmYes()

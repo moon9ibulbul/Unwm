@@ -46,19 +46,59 @@
         }
     }
 
-    async function fetchBuiltInSamples() {
-        try {
-            const response = await fetch('watermark-samples.json');
-            const raw = await response.json();
-            state.builtIn = raw.map((item) => ({
+    function normalizeSamplePayload(raw) {
+        if (!Array.isArray(raw)) {
+            return [];
+        }
+        return raw
+            .filter((item) => item && item.file && item.name)
+            .map((item) => ({
                 id: `asset:${item.file}`,
-                name: item.name.replace(/\s+/g, ' ').trim(),
-                file: item.file,
+                name: String(item.name).replace(/\s+/g, ' ').trim(),
+                file: String(item.file),
                 type: 'asset'
             }));
+    }
+
+    function loadSamplesWithXhr(url) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.overrideMimeType('application/json');
+            xhr.onload = () => {
+                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch (err) {
+                        reject(err);
+                    }
+                } else {
+                    reject(new Error(`HTTP ${xhr.status}`));
+                }
+            };
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.send();
+        });
+    }
+
+    async function fetchBuiltInSamples() {
+        const url = new URL('watermark-samples.json', window.location.href).toString();
+        try {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const raw = await response.json();
+            state.builtIn = normalizeSamplePayload(raw);
         } catch (error) {
-            console.error('Failed to load sample list', error);
-            updateStatus('Gagal memuat daftar sample bawaan.', 'warning');
+            console.warn('Fetch API gagal, mencoba XHR sebagai cadangan', error);
+            try {
+                const raw = await loadSamplesWithXhr(url);
+                state.builtIn = normalizeSamplePayload(raw);
+            } catch (fallbackError) {
+                console.error('Failed to load sample list', fallbackError);
+                updateStatus('Gagal memuat daftar sample bawaan.', 'warning');
+            }
         }
     }
 
