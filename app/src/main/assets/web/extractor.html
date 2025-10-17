@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AstralUNWM Extractor</title>
+    <link rel="stylesheet" href="styles/common.css" />
+    <link rel="stylesheet" href="styles/extractor.css" />
+</head>
+<body>
+<div class="layout">
+    <aside class="side-panel">
+        <h1>Extractor</h1>
+        <p class="subtitle">Ekstrak watermark dari dua sampel latar berbeda.</p>
+        <div class="panel-block">
+            <label class="toggle">
+                <input type="checkbox" id="contrastStretch" />
+                <span>Tingkatkan kontras otomatis</span>
+            </label>
+        </div>
+        <div class="panel-block">
+            <h2>Sampel 1</h2>
+            <label class="input-label">Load image 1<input type="file" id="inputImage1" accept="image/*" /></label>
+            <div class="color-row">
+                <label class="input-label">BG color
+                    <input type="color" id="colorImage1" value="#000000" />
+                </label>
+                <button type="button" class="icon-button" onclick="pickColor(1)">🎯</button>
+            </div>
+        </div>
+        <div class="panel-block">
+            <h2>Sampel 2</h2>
+            <label class="input-label">Load image 2<input type="file" id="inputImage2" accept="image/*" /></label>
+            <div class="color-row">
+                <label class="input-label">BG color
+                    <input type="color" id="colorImage2" value="#ffffff" />
+                </label>
+                <button type="button" class="icon-button" onclick="pickColor(2)">🎯</button>
+            </div>
+        </div>
+        <div class="panel-block">
+            <h2>Preview options</h2>
+            <label class="input-label">Default position
+                <select id="defaultPosition">
+                    <option value="top-left">Top Left</option>
+                    <option value="top-right">Top Right</option>
+                    <option value="center">Center</option>
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="bottom-right">Bottom Right</option>
+                </select>
+            </label>
+            <label class="input-label">Blend mode
+                <select id="overlayMode">
+                    <option value="normal">Normal</option>
+                    <option value="difference">Difference</option>
+                    <option value="darken">Darken</option>
+                    <option value="lighten">Lighten</option>
+                    <option value="hard-light">Hard Light</option>
+                </select>
+            </label>
+            <label class="input-label">Preview filter
+                <select id="overlayFilters">
+                    <option value="none">No filter</option>
+                    <option value="invert()">Invert</option>
+                    <option value="invert() hue-rotate(180deg)">Invert (brightness)</option>
+                    <option value="grayscale(100%)">Grayscale</option>
+                </select>
+            </label>
+        </div>
+        <div class="panel-block actions">
+            <button class="primary-button" onclick="extract()">Extract watermark</button>
+        </div>
+        <div class="panel-block info">
+            <p>Tip: Geser kotak biru untuk menentukan area ekstraksi. Hasil akan otomatis tersimpan sebagai sample lokal.</p>
+        </div>
+    </aside>
+    <main class="workspace">
+        <div class="canvas-wrapper">
+            <div id="imageContainer" class="image-container">
+                <canvas id="image1"></canvas>
+                <canvas id="image2" style="opacity:0.5;"></canvas>
+                <div id="window" class="extract-window" style="display:none;">
+                    <div id="windowSize"></div>
+                </div>
+            </div>
+            <div id="confirm" class="confirm" style="display:none;">
+                <span>Do you want to save the changes?</span>
+                <button onclick="confirmYes()" class="primary-button">Yes</button>
+                <button onclick="confirmNo()" class="text-button">No</button>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="scripts/android-extractor-bridge.js"></script>
+<script src="scripts/extract.js"></script>
+</body>
+</html>

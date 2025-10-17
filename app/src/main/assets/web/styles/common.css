@@ -1,0 +1,51 @@
+:root {
+    color-scheme: light dark;
+    --surface: #f8f5ff;
+    --surface-variant: #ebe6ff;
+    --surface-dark: #1c1b23;
+    --surface-variant-dark: #2a2933;
+    --on-surface: #1d1a22;
+    --on-surface-dark: #eae6f5;
+    --primary: #6750a4;
+    --primary-dark: #cfbcff;
+    --outline: rgba(103, 80, 164, 0.35);
+    --radius: 16px;
+    --surface-elevated: rgba(255, 255, 255, 0.72);
+    --surface-elevated-strong: rgba(255, 255, 255, 0.86);
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --surface: var(--surface-dark);
+        --surface-variant: var(--surface-variant-dark);
+        --on-surface: var(--on-surface-dark);
+        --primary: #cfbcff;
+        --primary-dark: #381e72;
+        --outline: rgba(207, 188, 255, 0.25);
+        --surface-elevated: rgba(33, 31, 43, 0.92);
+        --surface-elevated-strong: rgba(46, 43, 57, 0.95);
+    }
+}
+
+body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--on-surface);
+    font-size: 16px;
+}
+
+button,
+input,
+select {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+h1, h2, h3 {
+    margin: 0;
+}

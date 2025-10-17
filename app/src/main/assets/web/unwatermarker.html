@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AstralUNWM Remover</title>
+    <link rel="stylesheet" href="styles/common.css" />
+    <link rel="stylesheet" href="styles/unwatermarker.css" />
+</head>
+<body>
+<div class="layout">
+    <aside class="sample-panel">
+        <header>
+            <h1>AstralUNWM</h1>
+            <p class="subtitle">Bulk watermark remover</p>
+        </header>
+        <div class="panel-section">
+            <label class="panel-label" for="sample-search">Sample watermark</label>
+            <div class="search-row">
+                <input id="sample-search" type="search" placeholder="Cari watermark" />
+                <button id="import-sample" class="icon-button" title="Import watermark">⤴</button>
+            </div>
+            <div class="toggle-row">
+                <label class="toggle">
+                    <input type="checkbox" id="auto-detect-toggle" checked />
+                    <span>Deteksi otomatis</span>
+                </label>
+                <button id="refresh-samples" class="icon-button" title="Refresh list">↻</button>
+            </div>
+            <div id="sample-list" class="sample-list" role="listbox"></div>
+        </div>
+        <div class="panel-section secondary">
+            <h2>Tips</h2>
+            <p>Pilih watermark sample yang mendekati sumber gambar. Anda juga bisa mengekstrak watermark baru lewat tab Extractor.</p>
+        </div>
+    </aside>
+    <main>
+        <section class="controls">
+            <div class="control-group">
+                <label for="inputImage">Muat gambar</label>
+                <input type="file" id="inputImage" accept="image/*" multiple />
+            </div>
+            <div class="control-group">
+                <label for="inputWatermark">Muat watermark</label>
+                <input type="file" id="inputWatermark" accept="image/*" />
+            </div>
+            <div class="control-inline">
+                <label for="defaultPosition">Posisi default</label>
+                <select id="defaultPosition">
+                    <option value="top-left">Top Left</option>
+                    <option value="top-right">Top Right</option>
+                    <option value="center">Center</option>
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="bottom-right">Bottom Right</option>
+                </select>
+            </div>
+            <div class="control-inline">
+                <label for="overlayMode">Mode overlay</label>
+                <select id="overlayMode">
+                    <option value="normal">Normal</option>
+                    <option value="difference">Difference</option>
+                </select>
+            </div>
+            <div class="control-inline">
+                <label class="toggle">
+                    <input type="checkbox" id="preview" checked />
+                    <span>Konfirmasi sebelum simpan</span>
+                </label>
+            </div>
+            <div class="control-inline">
+                <label class="toggle">
+                    <input type="checkbox" id="autoSubpixel" />
+                    <span>Subpixel align</span>
+                </label>
+            </div>
+            <div class="control-inline">
+                <label class="toggle">
+                    <input type="checkbox" id="filterJPEG" />
+                    <span>Filter JPEG noise</span>
+                </label>
+            </div>
+            <div class="control-inline">
+                <label class="toggle">
+                    <input type="checkbox" id="fullBatch" />
+                    <span>Full batch</span>
+                </label>
+            </div>
+            <div class="control-inline">
+                <label class="toggle">
+                    <input type="checkbox" id="showAdvanced" />
+                    <span>Opsi lanjutan</span>
+                </label>
+            </div>
+        </section>
+
+        <section id="advancedOptions" class="advanced-options" style="display:none">
+            <div class="advanced-grid">
+                <label>Preview contrast <input type="range" id="previewContrast" min="0" max="10" step="0.1" value="1" /></label>
+                <label>Preview brightness <input type="range" id="previewBrightness" min="0" max="2" step="0.05" value="1" /></label>
+                <label>JPEG strength <input type="range" id="filterJPEGStrength" min="0" max="10" step="1" value="3" /></label>
+                <label>JPEG threshold <input type="range" id="filterJPEGThreshold" min="0" max="25" step="1" value="4" /></label>
+                <label>Alpha adjust <input type="range" id="alphaAdjust" min="0.5" max="1.5" step="0.01" value="1" /></label>
+                <label>Transparency threshold <input type="number" id="transparencyThreshold" min="0" max="255" value="3" /></label>
+                <label>Opaque smoothing <input type="number" id="opaqueThreshold" min="0" max="255" value="240" /></label>
+                <label class="toggle"><input type="checkbox" id="smoothEdges" /> Smooth edges</label>
+                <label class="toggle"><input type="checkbox" id="adjustBrightness" /> Adjust brightness</label>
+                <label>Extras
+                    <select id="extras">
+                        <option value="none">---</option>
+                        <option value="generateTencent">Generate Tencent watermark</option>
+                        <option value="resizeWatermark">Resize watermark</option>
+                        <option value="resizeWatermarkByPageSize">Resize watermark by page size</option>
+                        <option value="fullReset">Reset settings</option>
+                    </select>
+                    <button onclick="run_extra()">►</button>
+                </label>
+                <label class="toggle"><input type="checkbox" id="fullBatchZIP" checked /> Simpan sebagai ZIP</label>
+            </div>
+        </section>
+
+        <section class="workspace">
+            <div class="canvas-area">
+                <div class="toolbar">
+                    <div class="zoom-indicator">Zoom <span id="zoom">100%</span></div>
+                    <div class="spacer"></div>
+                    <button id="skipbutton" class="text-button" style="display:none">Lewati gambar</button>
+                    <div class="toolbar-actions" id="unwatermarkbuttons">
+                        <button onclick="resetZoom()" class="text-button">Reset zoom</button>
+                        <button onclick="unwatermark()" class="primary-button">Remove watermark</button>
+                    </div>
+                </div>
+                <div id="imageContainer" class="image-container">
+                    <img id="image" draggable="false" alt="Preview" />
+                    <canvas id="watermark"></canvas>
+                </div>
+                <div id="confirm" class="confirm-panel" style="display:none">
+                    <div class="confirm-actions">
+                        <button onclick="confirmYes()" class="primary-button">Simpan & lanjut</button>
+                        <button onclick="confirmNo()" class="text-button">Coba lagi</button>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-panel">
+                <h3>Preview</h3>
+                <div class="preview-images">
+                    <figure>
+                        <img id="preview-before" alt="Sebelum" />
+                        <figcaption>Sebelum</figcaption>
+                    </figure>
+                    <figure>
+                        <img id="preview-after" alt="Sesudah" />
+                        <figcaption>Sesudah</figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="scripts/simplezip.min.js"></script>
+<script src="scripts/pica9.min.js"></script>
+<script src="scripts/tencent_watermark.js"></script>
+<script src="scripts/android-bridge.js"></script>
+<script src="scripts/watermark.js"></script>
+</body>
+</html>
