@@ -111,7 +111,7 @@ fun ExtractorScreen(modifier: Modifier = Modifier) {
                         if (allowMultiple) {
                             multiPicker.launch(mimeTypes)
                         } else {
-                            singlePicker.launch(mimeTypes.first())
+                            singlePicker.launch(arrayOf(mimeTypes.first()))
                         }
                         return true
                     }
