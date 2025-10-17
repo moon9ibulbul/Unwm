@@ -99,10 +99,10 @@ val generateWatermarkAssets by tasks.registering(Sync::class) {
 }
 
 androidComponents {
+    val objects = project.objects
     onVariants { variant ->
         variant.sources.assets?.addGeneratedSourceDirectory(
-            generateWatermarkAssets,
-            Sync::getDestinationDir
-        )
+            generateWatermarkAssets
+        ) { task -> objects.directoryProperty().apply { set(task.destinationDir) } }
     }
 }

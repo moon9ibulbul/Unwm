@@ -35,6 +35,21 @@ set APP_HOME=%DIRNAME%
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
+set WRAPPER_JAR=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
+set WRAPPER_B64=%WRAPPER_JAR%.base64
+
+if not exist "%WRAPPER_JAR%" (
+    if exist "%WRAPPER_B64%" (
+        powershell -NoProfile -Command "$b64='%WRAPPER_B64%';$jar='%WRAPPER_JAR%';$bytes=[Convert]::FromBase64String([IO.File]::ReadAllText($b64));[IO.File]::WriteAllBytes($jar,$bytes)" || (
+            echo ERROR: Failed to decode Gradle wrapper JAR from %WRAPPER_B64% 1>&2
+            goto fail
+        )
+    ) else (
+        echo ERROR: Gradle wrapper JAR is missing and could not be restored. 1>&2
+        goto fail
+    )
+)
+
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 
