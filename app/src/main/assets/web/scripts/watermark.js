@@ -48,12 +48,6 @@ function setDownloadButtonEnabled(enabled) {
 function clearDownloadState(options) {
     options = options || {}
     var previousUrl = lastResultUrl
-    if (!options.keepPreview) {
-        var previewAfter = document.getElementById('preview-after')
-        if (previewAfter) {
-            previewAfter.src = ''
-        }
-    }
     lastResultUrl = ''
     lastResultName = ''
     if (!options.preserveButton) {
@@ -168,14 +162,6 @@ function loadImage() {
                 wmPosIsUpdate = false
             }
             resetZoom()
-            var previewBefore = document.getElementById('preview-before')
-            if (previewBefore) {
-                previewBefore.src = this.src
-            }
-            var previewAfter = document.getElementById('preview-after')
-            if (previewAfter) {
-                previewAfter.src = ''
-            }
             image_ib = await createImageBitmap(this, {
                 colorSpaceConversion: 'none',
                 premultiplyAlpha: 'none',
@@ -994,14 +980,6 @@ function unwatermark() {
 function triggerDownload(url) {
     var originalUrl = image.src
     imageBackupUrl = originalUrl
-    var previewBefore = document.getElementById('preview-before')
-    var previewAfter = document.getElementById('preview-after')
-    if (previewBefore) {
-        previewBefore.src = originalUrl
-    }
-    if (previewAfter) {
-        previewAfter.src = url
-    }
     image.src = url
     updateDownloadState(url)
     var hasBatch = files && files.length > 1
@@ -1070,14 +1048,6 @@ function confirmNo() {
     watermark.style.display = 'initial'
     document.getElementById('confirm').style.display = 'none'
     document.getElementById('unwatermarkbuttons').style.display = 'initial'
-    var previewAfter = document.getElementById('preview-after')
-    if (previewAfter) {
-        previewAfter.src = ''
-    }
-    var previewBefore = document.getElementById('preview-before')
-    if (previewBefore) {
-        previewBefore.src = imageBackupUrl
-    }
 }
 async function autoDetectWatermarkPosition() {
     document.dispatchEvent(new CustomEvent('astral:autodetect-start'))
