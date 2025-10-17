@@ -300,9 +300,9 @@ main {
     }
 
     .sample-panel {
-        position: sticky;
-        top: 0;
-        z-index: 5;
+        position: static;
+        top: auto;
+        z-index: auto;
     }
 
     .workspace {
