@@ -42,7 +42,7 @@ fun ExtractorScreen(modifier: Modifier = Modifier) {
             val argument = JSONObject.quote(payload)
             webViewHolder.value?.post {
                 webViewHolder.value?.evaluateJavascript(
-                    "window.AstralSamplesBridge.onSampleImported($argument)",
+                    "window.AstralSamplesBridge.onSampleSaved($argument)",
                     null
                 )
             }
