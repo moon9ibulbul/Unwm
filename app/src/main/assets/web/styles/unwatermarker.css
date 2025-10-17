@@ -267,40 +267,13 @@ main {
     gap: 12px;
 }
 
-.preview-panel {
-    background: var(--surface-elevated);
-    border-radius: var(--radius);
-    padding: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.preview-images {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.preview-actions {
-    margin-top: 12px;
+.download-action {
+    margin-top: 16px;
     display: flex;
     justify-content: flex-end;
 }
 
-.preview-images figure {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.preview-images img {
-    width: 100%;
-    border-radius: 12px;
-    border: 1px solid var(--outline);
-    object-fit: contain;
-}
-
-.preview-panel button:disabled {
+.download-action button:disabled {
     opacity: 0.5;
     pointer-events: none;
 }
