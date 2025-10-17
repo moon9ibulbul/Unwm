@@ -29,7 +29,7 @@ fun ExtractorScreen(modifier: Modifier = Modifier) {
     val webViewHolder = remember { mutableStateOf<WebView?>(null) }
     var fileChooserCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
 
-    val showToast: (String) -> Unit = { message ->
+    val displayToast: (String) -> Unit = { message ->
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
@@ -73,7 +73,7 @@ fun ExtractorScreen(modifier: Modifier = Modifier) {
         AstralSamplesInterface(sampleManager)
     }.apply {
         onSampleSaved = handleSampleSaved
-        showToast = showToast
+        showToast = displayToast
     }
 
     DisposableEffect(Unit) {
